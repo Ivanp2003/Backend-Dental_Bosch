@@ -5,7 +5,7 @@ import express from "express";
 import cors from "cors";
 import conectarDB from "./database.js"; // Si database.js está en src/
 import doctorRoutes from "./routes/doctor-routes.js"; 
-
+//import dotenv from "dotenv";
 dotenv.config();
 
 const servidor = express();
@@ -25,3 +25,5 @@ const PORT = process.env.PORT || 4000;
 servidor.listen(PORT, () => {
   console.log(` Servidor corriendo en puerto ${PORT}`);
 });
+
+

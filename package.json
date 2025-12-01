@@ -11,10 +11,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/TU-USUARIO/NOMBRE-REPO.git"
+    "url": "https://github.com/Ivanp2003/Backend-Dental_Bosch"
   },
   "keywords": [],
-  "author": "Tu Nombre <tu@email.com>",
+  "author": "Tu Nombre <andrespanchichavez@gmail.com>",
   "license": "ISC",
   "engines": {
     "node": "18.x"
