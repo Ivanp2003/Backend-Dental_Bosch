@@ -32,42 +32,30 @@ npm install
 
 Crea un archivo .env en la raíz del proyecto:
 
-# ===========================================
-#         CONFIGURACIÓN DEL SERVIDOR
-# ===========================================
+##         CONFIGURACIÓN DEL SERVIDOR
 PORT=4000
 
-# ===========================================
-#         BASE DE DATOS MONGODB ATLAS
-# ===========================================
+##         BASE DE DATOS MONGODB ATLAS
 MONGODB_URI_PRODUCTION="TU_URI_DE_ATLAS"
 
 # Si deseas usar base de datos local en desarrollo:
 # MONGODB_URI_LOCAL="mongodb://127.0.0.1:27017/nombreDB"
 
-# ===========================================
-# JWT - Tokens de autenticación
-# ===========================================
+## JWT - Tokens de autenticación
 JWT_SECRET="tu_clave_super_secreta"
 
-# ===========================================
-# CONFIG NODMAILER (para envío de correos)
-# ===========================================
+## CONFIG NODMAILER (para envío de correos)
 EMAIL_HOST=smtp.gmail.com
 EMAIL_PORT=587
 EMAIL_USER="tuCorreo@gmail.com"
 EMAIL_PASS="contraseñaAppGenerada"
 
-# ===========================================
-# CLOUDINARY (subida de imágenes)
-# ===========================================
+## CLOUDINARY (subida de imágenes)
 CLOUDINARY_CLOUD_NAME=tu_cloud_name
 CLOUDINARY_API_KEY=tu_api_key
 CLOUDINARY_API_SECRET=tu_api_secret
 
-# ===========================================
-# STRIPE (pagos)
-# ===========================================
+## STRIPE (pagos)
 STRIPE_SECRET_KEY=tu_clave_secreta
 
 # ▶️ Ejecutar el servidor en modo desarrollo
