@@ -1,4 +1,5 @@
-import { Router } from "express";
+import { Router } from "express"; // Router de Express para definir rutas modulares
+
 import {
   registro,
   confirmarMail,
@@ -7,25 +8,41 @@ import {
   crearNuevoPassword,
   login,
   perfil,
-  actualizarPerfil
-} from "../controllers/doctor-controller.js";
+  actualizarPerfil,
+  actualizarPassword
+} from "../controllers/doctor-controller.js"; // Controladores con la lógica de cada endpoint
 
-import { verificarTokenJWT}from"../middlewares/JWT.js";
+import { verificarTokenJWT, verificarDoctor } from "../middlewares/JWT.js"; // Middleware para proteger rutas con JWT y verificar rol
 
-const router = Router();
+const router = Router(); // Instancia del router de Express
 
-console.log(" [doctor-routes.js] Rutas del doctor cargadas.");
+console.log(" [doctor-routes.js] Rutas del doctor cargadas."); // Log para verificar que las rutas se cargaron correctamente
 
-router.post("/registro", registro);
-router.get("/confirmar/:token", confirmarMail);//Consumir desde el front 
+// Rutas públicas (no requieren autenticación)
+router.post("/registro", registro); // Registro de un nuevo doctor
+router.get("/confirmar/:token", confirmarMail); // Confirmación de cuenta mediante token (desde el front)
+router.get("/debug/tokens", async (req, res) => {
+  try {
+    const Doctor = await import('../models/Doctor.js');
+    const doctores = await Doctor.default.find({})
+      .select('nombre apellido email token confirmado createdAt')
+      .sort({ createdAt: -1 })
+      .limit(5);
+    res.json(doctores);
+  } catch (error) {
+    res.status(500).json({ msg: "Error al obtener tokens" });
+  }
+});
 
-router.post("/recuperarPassword", recuperarPassword);
-router.get("/recuperarPassword/:token", comprobarTokenPassword);//Consumir desde el front
-router.post("/nuevoPassword/:token", crearNuevoPassword);
+router.post("/recuperarPassword", recuperarPassword); // Solicitud de recuperación de contraseña
+router.get("/recuperarPassword/:token", comprobarTokenPassword); // Validación del token de recuperación (desde el front)
+router.post("/nuevoPassword/:token", crearNuevoPassword); // Creación de nueva contraseña
 
-router.post("/login", login);
+router.post("/login", login); // Inicio de sesión y generación del JWT
 
-// Rutas protegidas (requieren token)
-router.get('/perfil',verificarTokenJWT,perfil)
-router.put('/actualizarperfil/:id',verificarTokenJWT,actualizarPerfil)
-export default router;
+// Rutas protegidas (requieren token JWT válido y rol de doctor)
+router.get("/perfil", verificarTokenJWT, verificarDoctor, perfil); // Obtiene el perfil del doctor autenticado
+router.put("/actualizarperfil/:id", verificarTokenJWT, verificarDoctor, actualizarPerfil); // Actualiza la información del perfil
+router.put("/actualizarpassword/:id", verificarTokenJWT, verificarDoctor, actualizarPassword); // Actualiza la contraseña del doctor autenticado
+
+export default router; // Exporta el router para ser usado en la aplicación principal

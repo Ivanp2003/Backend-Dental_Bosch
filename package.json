@@ -2,23 +2,15 @@
   "name": "back-dental-bosch",
   "version": "1.0.0",
   "type": "module",
-  "description": "Backend para proyecto Dental Bosch",
-  "main": "src/index.js",
+  "description": "",
+  "main": "index.js",
   "scripts": {
     "dev": "nodemon src/index.js",
-    "start": "node src/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/Ivanp2003/Backend-Dental_Bosch"
-  },
   "keywords": [],
-  "author": "Tu Nombre <andrespanchichavez@gmail.com>",
+  "author": "",
   "license": "ISC",
-  "engines": {
-    "node": "18.x"
-  },
   "dependencies": {
     "bcryptjs": "^3.0.3",
     "cloudinary": "^2.8.0",
@@ -26,10 +18,13 @@
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "express-fileupload": "^1.5.2",
+    "express-session": "^1.19.0",
     "fs-extra": "^11.3.2",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^9.0.0",
     "nodemailer": "^7.0.11",
+    "passport": "^0.7.0",
+    "passport-google-oauth20": "^2.0.0",
     "socket.io": "^4.8.1",
     "stripe": "^20.0.0"
   },

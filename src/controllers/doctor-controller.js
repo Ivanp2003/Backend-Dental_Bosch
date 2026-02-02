@@ -1,4 +1,3 @@
-// Back-Dental-Bosch/src/controllers/doctor-controller.js
 import Doctor from "../models/Doctor.js";
 import crearJWT from "../helpers/crearJWT.js";
 import { sendMailToRegister, sendMailToRecoveryPassword } from "../helpers/sendMail.js";
@@ -29,20 +28,24 @@ export const registro = async (req, res) => {
     // Crear doctor
     const doctor = new Doctor(req.body);
     doctor.token = crypto.randomBytes(20).toString("hex");
+    doctor.confirmado = false; // Requiere confirmación por email
+    doctor.estado = "pendiente"; // Pendiente de aprobación
 
     await doctor.save();
 
     // Enviar correo de confirmación
     await sendMailToRegister(email, nombre, doctor.token);
 
-    res.json({ msg: "Registro exitoso. Revisa tu correo para confirmar" });
+    res.json({ 
+      msg: "Registro exitoso. Por favor, revisa tu correo para confirmar tu cuenta" 
+    });
   } catch (error) {
     console.log(error);
     res.status(500).json({ msg: "Hubo un error, intenta nuevamente" });
   }
 };
 
-// CONFIRMAR MAIL
+// CONFIRMAR EMAIL
 export const confirmarMail = async (req, res) => {
   try {
     const { token } = req.params;
@@ -53,10 +56,12 @@ export const confirmarMail = async (req, res) => {
     // ✅ Usar updateOne para evitar el hook
     await Doctor.updateOne(
       { _id: doctor._id },
-      { confirmado: true, token: "" }
+      { confirmado: true, token: "", estado: "aprobado" }
     );
 
-    res.json({ msg: "Cuenta confirmada correctamente" });
+    res.json({ 
+      msg: "Cuenta confirmada correctamente. Ya puedes iniciar sesión" 
+    });
   } catch (error) {
     console.log(error);
     res.status(500).json({ msg: "Hubo un error al confirmar la cuenta" });
@@ -74,13 +79,20 @@ export const login = async (req, res) => {
     if (!doctor.confirmado)
       return res.status(400).json({ msg: "La cuenta no ha sido confirmada" });
 
+    // Validar que el doctor esté aprobado
+    if (doctor.estado !== "aprobado") {
+      return res.status(403).json({ 
+        msg: `Tu cuenta está ${doctor.estado}. Debes ser aprobado por un administrador para acceder.` 
+      });
+    }
+
     const passwordCorrecto = await doctor.compararPassword(password);
     if (!passwordCorrecto)
       return res.status(400).json({ msg: "Contraseña incorrecta" });
 
     res.json({
       msg: "Login correcto",
-      token: crearJWT(doctor._id),
+      token: crearJWT(doctor._id,"doctor"),
       doctor: {
         id: doctor._id,
         nombre: doctor.nombre,
@@ -89,7 +101,8 @@ export const login = async (req, res) => {
         especialidad: doctor.especialidad,
         telefono: doctor.telefono,
         direccion: doctor.direccion,
-        rol: doctor.rol
+        rol: doctor.rol,
+        estado: doctor.estado
       }
     });
   } catch (error) {
@@ -242,6 +255,56 @@ export const actualizarPerfil = async (req, res) => {
 
   } catch (error) {
     console.error(" Error al actualizar perfil:", error);
+    res.status(500).json({ msg: `Error en el servidor - ${error.message}` });
+  }
+};
+
+// ACTUALIZAR CONTRASEÑA
+export const actualizarPassword = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { passwordActual, passwordNuevo } = req.body;
+
+    // Validar que el ID sea válido
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ msg: `ID inválido: ${id}` });
+    }
+
+    // Verificar que el doctor existe
+    const doctorBDD = await Doctor.findById(id);
+    if (!doctorBDD) {
+      return res.status(404).json({ msg: `No existe el doctor con ID ${id}` });
+    }
+
+    // Verificar que el usuario autenticado es el mismo que va a actualizar la contraseña
+    if (req.doctorHeader._id.toString() !== id) {
+      return res.status(403).json({ msg: "No tienes permisos para actualizar esta contraseña" });
+    }
+
+    // Validar campos obligatorios
+    if (!passwordActual || !passwordNuevo) {
+      return res.status(400).json({ msg: "La contraseña actual y la nueva son obligatorias" });
+    }
+
+    // Validar longitud de la nueva contraseña
+    if (passwordNuevo.length < 6) {
+      return res.status(400).json({ msg: "La nueva contraseña debe tener al menos 6 caracteres" });
+    }
+
+    // Verificar que la contraseña actual sea correcta
+    const passwordCorrecto = await doctorBDD.compararPassword(passwordActual);
+    if (!passwordCorrecto) {
+      return res.status(400).json({ msg: "La contraseña actual es incorrecta" });
+    }
+
+    // Actualizar la contraseña
+    doctorBDD.password = passwordNuevo;
+    await doctorBDD.save();
+
+    res.status(200).json({ msg: "Contraseña actualizada correctamente" });
+
+  } catch (error) {
+    console.error(" Error al actualizar contraseña:", error);
     res.status(500).json({ msg: `Error en el servidor - ${error.message}` });
   }
 };
