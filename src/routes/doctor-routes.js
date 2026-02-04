@@ -9,7 +9,8 @@ import {
   login,
   perfil,
   actualizarPerfil,
-  actualizarPassword
+  actualizarPassword,
+  listarDoctoresAprobados
 } from "../controllers/doctor-controller.js"; // Controladores con la lógica de cada endpoint
 
 import { verificarTokenJWT, verificarDoctor } from "../middlewares/JWT.js"; // Middleware para proteger rutas con JWT y verificar rol
@@ -21,18 +22,7 @@ console.log(" [doctor-routes.js] Rutas del doctor cargadas."); // Log para verif
 // Rutas públicas (no requieren autenticación)
 router.post("/registro", registro); // Registro de un nuevo doctor
 router.get("/confirmar/:token", confirmarMail); // Confirmación de cuenta mediante token (desde el front)
-router.get("/debug/tokens", async (req, res) => {
-  try {
-    const Doctor = await import('../models/Doctor.js');
-    const doctores = await Doctor.default.find({})
-      .select('nombre apellido email token confirmado createdAt')
-      .sort({ createdAt: -1 })
-      .limit(5);
-    res.json(doctores);
-  } catch (error) {
-    res.status(500).json({ msg: "Error al obtener tokens" });
-  }
-});
+router.get("/aprobados", listarDoctoresAprobados); // Listar doctores aprobados (público)
 
 router.post("/recuperarPassword", recuperarPassword); // Solicitud de recuperación de contraseña
 router.get("/recuperarPassword/:token", comprobarTokenPassword); // Validación del token de recuperación (desde el front)

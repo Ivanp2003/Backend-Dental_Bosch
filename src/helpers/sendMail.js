@@ -1,11 +1,15 @@
-import { sendEmail } from "../config/sendgrid.js";
+import transporter from "../config/nodemailer.js";
 
 // Función para enviar correo de confirmación de registro
 export const sendMailToRegister = async (email, nombre, token) => {
   try {
     console.log("📨 Enviando correo de registro a:", email);
     
-    const html = `
+    const info = await transporter.sendMail({
+      from: `"Dental Bosch" <${process.env.USER_MAILTRAP}>`,
+      to: email,
+      subject: "Confirma tu cuenta en Dental Bosch",
+      html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <div style="text-align: center; margin-bottom: 30px;">
             <h1 style="color: #F47CC6; font-size: 2.5rem; margin: 0;">Dental Bosch</h1>
@@ -13,29 +17,33 @@ export const sendMailToRegister = async (email, nombre, token) => {
           
           <div style="background-color: #ffffff; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
             <h2 style="color: #F47CC6; margin-top: 0;">¡Bienvenido/a ${nombre}!</h2>
-            <p>Gracias por registrarte en Dental Bosch. Para completar tu registro, por favor confirma tu cuenta haciendo clic en el siguiente enlace:</p>
+            <p style="color: #333; font-size: 16px; line-height: 1.6;">
+              Gracias por registrarte en Dental Bosch. Para confirmar tu cuenta, haz clic en el siguiente botón:
+            </p>
             
             <div style="text-align: center; margin: 30px 0;">
-              <a href="${process.env.URL_BACKEND}paciente/confirmar/${token}" 
-                 style="background-color: #F47CC6; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">
-                Confirmar Cuenta
+              <a href="${process.env.URL_FRONTEND}confirmar/${token}" 
+                 style="display: inline-block; padding: 12px 30px; background-color: #69D1D2; color: white; text-decoration: none; border-radius: 25px; font-weight: bold; font-size: 16px;">
+                Confirmar cuenta
               </a>
             </div>
             
-            <p style="color: #666; font-size: 14px;">Este enlace expirará en 24 horas. Si no creaste esta cuenta, puedes ignorar este correo.</p>
+            <p style="color: #666; font-size: 14px; margin-top: 20px;">
+              Si no solicitaste este registro, simplemente ignora este correo.
+            </p>
           </div>
           
-          <div style="text-align: center; margin-top: 30px; color: #888; font-size: 12px;">
-            <p>© 2024 Dental Bosch - Todos los derechos reservados</p>
+          <div style="text-align: center; margin-top: 20px; color: #999; font-size: 12px;">
+            <p>©${new Date().getFullYear()} Dental Bosch | Todos los derechos reservados</p>
           </div>
         </div>
-    `;
-    
-    const result = await sendEmail(email, "Confirma tu cuenta en Dental Bosch", html);
-    console.log("✅ Correo de registro enviado correctamente");
-    return result;
+      `,
+    });
+
+    console.log("Correo de registro enviado:", info.messageId);
+    return info;
   } catch (error) {
-    console.error("❌ Error al enviar correo de registro:", error.message);
+    console.error(" Error al enviar correo de registro:", error);
     throw error;
   }
 };
@@ -45,7 +53,11 @@ export const sendMailToPatient = async (email, nombre, password) => {
   try {
     console.log("📨 Enviando credenciales al paciente:", email);
     
-    const html = `
+    const info = await transporter.sendMail({
+      from: `"Dental Bosch" <${process.env.USER_MAILTRAP}>`,
+      to: email,
+      subject: "Bienvenido/a a Dental Bosch - Credenciales de acceso 🦷",
+      html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <div style="text-align: center; margin-bottom: 30px;">
             <h1 style="color: #F47CC6; font-size: 2.5rem; margin: 0;">Dental Bosch 🦷</h1>
@@ -83,13 +95,13 @@ export const sendMailToPatient = async (email, nombre, password) => {
             <p>©${new Date().getFullYear()} Dental Bosch | Todos los derechos reservados</p>
           </div>
         </div>
-    `;
-    
-    const result = await sendEmail(email, "Bienvenido/a a Dental Bosch - Credenciales de acceso 🦷", html);
-    console.log("✅ Correo de credenciales enviado correctamente");
-    return result;
+      `,
+    });
+
+    console.log("✅ Correo de credenciales enviado:", info.messageId);
+    return info;
   } catch (error) {
-    console.error("❌ Error al enviar correo al paciente:", error.message);
+    console.error("❌ Error al enviar correo al paciente:", error);
     throw error;
   }
 };
@@ -99,7 +111,11 @@ export const sendMailToRecoveryPassword = async (email, nombre, token) => {
   try {
     console.log("📨 Enviando correo de recuperación a:", email);
     
-    const html = `
+    const info = await transporter.sendMail({
+      from: `"Dental Bosch" <${process.env.USER_MAILTRAP}>`,
+      to: email,
+      subject: "Recuperación de contraseña - Dental Bosch",
+      html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <div style="text-align: center; margin-bottom: 30px;">
             <h1 style="color: #F47CC6; font-size: 2.5rem; margin: 0;">Dental Bosch</h1>
@@ -130,13 +146,13 @@ export const sendMailToRecoveryPassword = async (email, nombre, token) => {
             <p>©${new Date().getFullYear()} Dental Bosch | Todos los derechos reservados</p>
           </div>
         </div>
-    `;
-    
-    const result = await sendEmail(email, "Recuperación de contraseña - Dental Bosch", html);
-    console.log("✅ Correo de recuperación enviado correctamente");
-    return result;
+      `,
+    });
+
+    console.log(" Correo de recuperación enviado:", info.messageId);
+    return info;
   } catch (error) {
-    console.error("❌ Error al enviar correo de recuperación:", error.message);
+    console.error("Error al enviar correo de recuperación:", error);
     throw error;
   }
 };
@@ -146,7 +162,11 @@ export const sendMailCitaConfirmada = async (email, nombre, cita) => {
   try {
     console.log("📨 Enviando correo de confirmación de cita a:", email);
     
-    const html = `
+    const info = await transporter.sendMail({
+      from: `"Dental Bosch" <${process.env.USER_MAILTRAP}>`,
+      to: email,
+      subject: "Confirmación de Cita - Dental Bosch",
+      html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <div style="text-align: center; margin-bottom: 30px;">
             <h1 style="color: #F47CC6; font-size: 2.5rem; margin: 0;">Dental Bosch 🦷</h1>
@@ -189,13 +209,13 @@ export const sendMailCitaConfirmada = async (email, nombre, cita) => {
             <p>©${new Date().getFullYear()} Dental Bosch | Todos los derechos reservados</p>
           </div>
         </div>
-    `;
-    
-    const result = await sendEmail(email, "Confirmación de Cita - Dental Bosch", html);
-    console.log("✅ Correo de confirmación de cita enviado correctamente");
-    return result;
+      `,
+    });
+
+    console.log("✅ Correo de confirmación de cita enviado:", info.messageId);
+    return info;
   } catch (error) {
-    console.error("❌ Error al enviar correo de confirmación de cita:", error.message);
+    console.error("❌ Error al enviar correo de confirmación de cita:", error);
     throw error;
   }
 };
@@ -205,7 +225,11 @@ export const sendMailCitaRecordatorio = async (email, nombre, cita) => {
   try {
     console.log("📨 Enviando correo de recordatorio de cita a:", email);
     
-    const html = `
+    const info = await transporter.sendMail({
+      from: `"Dental Bosch" <${process.env.USER_MAILTRAP}>`,
+      to: email,
+      subject: "Recordatorio de Cita - Dental Bosch",
+      html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <div style="text-align: center; margin-bottom: 30px;">
             <h1 style="color: #F47CC6; font-size: 2.5rem; margin: 0;">Dental Bosch 🦷</h1>
@@ -230,7 +254,7 @@ export const sendMailCitaRecordatorio = async (email, nombre, cita) => {
             </div>
             
             <p style="color: #666; font-size: 14px; margin-top: 20px;">
-              Por favor llega 10 minutos antes de tu cita. Si necesitas cancelar, contáctanos con anticipación.
+              Si necesitas cancelar o reprogramar tu cita, por favor contáctanos.
             </p>
           </div>
           
@@ -238,13 +262,13 @@ export const sendMailCitaRecordatorio = async (email, nombre, cita) => {
             <p>©${new Date().getFullYear()} Dental Bosch | Todos los derechos reservados</p>
           </div>
         </div>
-    `;
-    
-    const result = await sendEmail(email, "Recordatorio de Cita - Dental Bosch", html);
-    console.log("✅ Correo de recordatorio de cita enviado correctamente");
-    return result;
+      `,
+    });
+
+    console.log("✅ Correo de recordatorio de cita enviado:", info.messageId);
+    return info;
   } catch (error) {
-    console.error("❌ Error al enviar correo de recordatorio de cita:", error.message);
+    console.error("❌ Error al enviar correo de recordatorio de cita:", error);
     throw error;
   }
 };

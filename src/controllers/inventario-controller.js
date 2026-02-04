@@ -14,7 +14,24 @@ const crearItemInventario = async (req, res) => {
     }
 
     // Validar stock máximo sea mayor que stock mínimo
-    if (stockMaximo <= stockMinimo) {
+    // Convertir a números para asegurar comparación correcta
+    const stockMinimoNum = Number(stockMinimo);
+    const stockMaximoNum = Number(stockMaximo);
+    
+    console.log('🔍 Inventario - Validando stock:', { stockMinimo, stockMaximo });
+    console.log('🔍 Inventario - Convertidos a números:', { stockMinimoNum, stockMaximoNum });
+    console.log('🔍 Inventario - Tipos originales:', { 
+      stockMinimoType: typeof stockMinimo, 
+      stockMaximoType: typeof stockMaximo 
+    });
+    console.log('🔍 Inventario - Tipos convertidos:', { 
+      stockMinimoNumType: typeof stockMinimoNum, 
+      stockMaximoNumType: typeof stockMaximoNum 
+    });
+    console.log('🔍 Inventario - Comparación:', stockMaximoNum, '<=', stockMinimoNum, '=', stockMaximoNum <= stockMinimoNum);
+    
+    if (stockMaximoNum <= stockMinimoNum) {
+      console.log('❌ Inventario - Validación fallida: stockMaximoNum <= stockMinimoNum');
       return res.status(400).json({
         msg: 'El stock máximo debe ser mayor que el stock mínimo'
       });
@@ -41,6 +58,11 @@ const crearItemInventario = async (req, res) => {
     const itemData = {
       ...req.body,
       codigo: codigo.toUpperCase(),
+      cantidad: Number(cantidad),
+      stockMinimo: stockMinimoNum,
+      stockMaximo: stockMaximoNum,
+      precioCompra: Number(precioCompra),
+      precioVenta: Number(precioVenta),
       doctorCreador: req.doctorHeader._id
     };
 

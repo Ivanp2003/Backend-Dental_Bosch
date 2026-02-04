@@ -21,6 +21,8 @@ const listarPacientes = async (req, res) => {
 // REGISTRO PACIENTE (PÚBLICO)
 const registrarPaciente = async (req, res) => {
   try {
+    console.log("📥 Datos recibidos en registro paciente:", req.body);
+    
     const {
       nombre,
       apellido,
@@ -59,6 +61,10 @@ const registrarPaciente = async (req, res) => {
       return res.status(400).json({ msg: "La cédula ya está registrada" });
     }
 
+    console.log("✅ Validaciones pasadas, creando paciente...");
+    console.log("📅 Fecha de nacimiento recibida:", fechaNacimiento);
+    console.log("📅 Tipo de fechaNacimiento:", typeof fechaNacimiento);
+
     const paciente = new Paciente({
       nombre,
       apellido,
@@ -66,27 +72,26 @@ const registrarPaciente = async (req, res) => {
       emailPaciente,
       passwordPaciente: password,
       telefono,
-      fechaNacimiento: new Date(fechaNacimiento),
+      fechaNacimiento,
       genero,
       token: crypto.randomBytes(20).toString("hex"),
-      confirmado: false,
-      provider: "local"
+      confirmado: false
     });
 
+    console.log("👤 Paciente creado, intentando guardar...");
     await paciente.save();
+    console.log("✅ Paciente guardado exitosamente");
 
-    // Enviar correo de confirmación (no bloquear el registro si falla)
-    try {
-      await sendMailToRegister(emailPaciente, nombre, paciente.token);
-    } catch (emailError) {
-      console.error("Error al enviar correo de confirmación:", emailError.message);
-    }
+    // Enviar correo de confirmación
+    await sendMailToRegister(emailPaciente, nombre, paciente.token);
 
     res.status(201).json({
       msg: "Registro exitoso. Por favor, revisa tu correo para confirmar tu cuenta"
     });
   } catch (error) {
-    console.error("Error al registrar paciente:", error);
+    console.error("❌ Error completo al registrar paciente:", error);
+    console.error("❌ Error message:", error.message);
+    console.error("❌ Error stack:", error.stack);
     res.status(500).json({ msg: "Error en el servidor" });
   }
 };
@@ -95,9 +100,12 @@ const registrarPaciente = async (req, res) => {
 // LOGIN PACIENTE
 const loginPaciente = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, emailPaciente, password } = req.body;
+    
+    // Aceptar tanto 'email' como 'emailPaciente'
+    const emailField = email || emailPaciente;
 
-    const paciente = await Paciente.findOne({ emailPaciente: email });
+    const paciente = await Paciente.findOne({ emailPaciente: emailField });
     if (!paciente) {
       return res.status(404).json({ msg: "Paciente no registrado" });
     }
@@ -179,21 +187,55 @@ const actualizarPerfilPaciente = async (req, res) => {
     console.log("✅ Paciente encontrado:", paciente.nombre, paciente.apellido);
     console.log("📝 Actualizando campos...");
 
-    paciente.nombre = req.body.nombre ?? paciente.nombre;
-    paciente.apellido = req.body.apellido ?? paciente.apellido;
-    paciente.telefono = req.body.telefono ?? paciente.telefono;
-    paciente.direccion = req.body.direccion ?? paciente.direccion;
+    // Actualizar los campos usando la misma lógica que el doctor (nullish coalescing)
+    const { nombre, apellido, telefono, direccion } = req.body;
+    
+    paciente.nombre = nombre ?? paciente.nombre;
+    paciente.apellido = apellido ?? paciente.apellido;
+    paciente.telefono = telefono ?? paciente.telefono;
+    paciente.direccion = direccion ?? paciente.direccion;
 
     console.log("💾 Guardando cambios...");
+    console.log("📊 Estado del paciente antes de guardar:", {
+      nombre: paciente.nombre,
+      apellido: paciente.apellido,
+      telefono: paciente.telefono,
+      direccion: paciente.direccion
+    });
+    
     await paciente.save();
     console.log("✅ Paciente actualizado exitosamente");
 
-    res.json({ msg: "Perfil actualizado" });
+    // Devolver los datos actualizados del paciente
+    const { passwordPaciente, __v, ...perfilActualizado } = paciente._doc;
+    res.json({ 
+      msg: "Perfil actualizado",
+      paciente: perfilActualizado
+    });
   } catch (error) {
-    console.error("❌ Error completo al registrar paciente:", error);
+    console.error("❌ Error completo al actualizar perfil:", error);
     console.error("❌ Error message:", error.message);
-    console.error("❌ Error stack:", error.stack);
-    res.status(500).json({ msg: "Error en el servidor" });
+    console.error("❌ Error name:", error.name);
+    
+    // Manejar errores de validación de Mongoose
+    if (error.name === 'ValidationError') {
+      const errors = Object.values(error.errors).map(err => err.message);
+      console.error("❌ Errores de validación:", errors);
+      return res.status(400).json({ 
+        msg: "Error de validación", 
+        errors: errors 
+      });
+    }
+    
+    // Manejar errores de duplicado
+    if (error.code === 11000) {
+      console.error("❌ Error de duplicado:", error.keyValue);
+      return res.status(400).json({ 
+        msg: "Ya existe un registro con esos datos" 
+      });
+    }
+    
+    res.status(500).json({ msg: "Error en el servidor al actualizar perfil" });
   }
 };
 
@@ -286,12 +328,70 @@ const desactivarPaciente = async (req, res) => {
   }
 };
 
+// ACTUALIZAR CONTRASEÑA DEL PACIENTE
+const actualizarPasswordPaciente = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { passwordActual, passwordNuevo } = req.body;
+
+    // Validar que el ID sea válido
+    if (!id) {
+      return res.status(400).json({ msg: "ID inválido" });
+    }
+
+    // Verificar que el paciente existe
+    const paciente = await Paciente.findById(id);
+    if (!paciente) {
+      return res.status(404).json({ msg: `No existe el paciente con ID ${id}` });
+    }
+
+    // Verificar que el usuario autenticado es el mismo que va a actualizar la contraseña
+    if (req.pacienteHeader._id.toString() !== id) {
+      return res.status(403).json({ msg: "No tienes permisos para actualizar esta contraseña" });
+    }
+
+    // Validaciones básicas
+    if (!passwordActual || !passwordNuevo) {
+      return res.status(400).json({ 
+        msg: "La contraseña actual y la nueva contraseña son obligatorias" 
+      });
+    }
+
+    if (passwordNuevo.length < 6) {
+      return res.status(400).json({ 
+        msg: "La nueva contraseña debe tener al menos 6 caracteres" 
+      });
+    }
+
+    // Verificar contraseña actual
+    const passwordCorrecto = await paciente.matchPassword(passwordActual);
+    if (!passwordCorrecto) {
+      return res.status(400).json({ msg: "La contraseña actual es incorrecta" });
+    }
+
+    // Actualizar contraseña
+    paciente.passwordPaciente = passwordNuevo;
+    await paciente.save();
+
+    res.json({ 
+      msg: "Contraseña actualizada exitosamente"
+    });
+
+  } catch (error) {
+    console.error("❌ Error al actualizar contraseña del paciente:", error);
+    res.status(500).json({ 
+      msg: "Error en el servidor al actualizar la contraseña" 
+    });
+  }
+};
+
 export {
   registrarPaciente,
   loginPaciente,
   confirmarMailPaciente,
   perfilPaciente,
   actualizarPerfilPaciente,
+  actualizarPasswordPaciente,
   crearPacienteDoctor,
   listarPacientes,
   desactivarPaciente

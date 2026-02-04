@@ -50,9 +50,18 @@ const verificarTokenJWT = async (req, res, next) => {
     // DOCTOR
     // ===============================
     if (rol === "doctor") {
+      console.log('🔐 JWT - Buscando doctor con ID:', id);
+      console.log('🔐 JWT - Tipo de ID:', typeof id);
+      
       const doctor = await Doctor.findById(id).select(
         "-password -token -__v"
       );
+
+      console.log('🔐 JWT - Doctor encontrado:', doctor ? 'Sí' : 'No');
+      if (doctor) {
+        console.log('🔐 JWT - Doctor._id:', doctor._id);
+        console.log('🔐 JWT - Doctor.id:', doctor.id);
+      }
 
       if (!doctor) {
         return res.status(404).json({ msg: "Doctor no encontrado" });

@@ -6,12 +6,12 @@ import {
   confirmarMailPaciente,
   perfilPaciente,
   actualizarPerfilPaciente,
+  actualizarPasswordPaciente,
   crearPacienteDoctor,
   listarPacientes,
   desactivarPaciente
 } from "../controllers/paciente-controller.js";
 import { crearCitaPaciente } from "../controllers/cita-controller.js";
-import Paciente from "../models/Paciente.js";
 
 import {
   verificarTokenJWT,
@@ -47,22 +47,11 @@ console.log(" [paciente-routes.js] Rutas del paciente cargadas."); // Log para v
 router.post("/registro", registrarPaciente);
 router.post("/login", loginPaciente);
 router.get("/confirmar/:token", confirmarMailPaciente);
-router.get("/debug/tokens", async (req, res) => {
-  try {
-    const pacientes = await Paciente.find({})
-      .select('nombre emailPaciente token confirmado createdAt')
-      .sort({ createdAt: -1 })
-      .limit(5);
-    res.json(pacientes);
-  } catch (error) {
-    console.error("Error al obtener tokens:", error);
-    res.status(500).json({ msg: "Error al obtener tokens" });
-  }
-});
 
 // RUTAS PACIENTE (JWT)
 router.get("/perfil", verificarTokenJWT, verificarPaciente, perfilPaciente);
 router.put("/perfil", verificarTokenJWT, verificarPaciente, actualizarPerfilPaciente);
+router.put("/actualizarpassword/:id", verificarTokenJWT, verificarPaciente, actualizarPasswordPaciente);
 router.post("/cita", verificarTokenJWT, verificarPaciente, crearCitaPaciente);
 
 // RUTAS DOCTOR

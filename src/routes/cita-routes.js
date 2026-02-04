@@ -24,7 +24,7 @@ console.log(" [cita-routes.js] Rutas de citas cargadas.");
 // RUTAS PÚBLICAS (sin autenticación)
 router.get("/disponibles", obtenerHorariosDisponibles); // Obtener horarios disponibles
 router.get("/doctor/prueba", listarCitasDoctor); // Ruta de prueba temporal
-router.get("/prueba/:id", obtenerCita); // Ruta de prueba para obtener cita por ID sin autenticación
+router.get("/doctor/test", listarCitasDoctor); // Ruta de prueba sin middleware
 router.put("/prueba/:id", actualizarCita); // Ruta de prueba para actualizar
 router.delete("/prueba/:id", eliminarCita); // Ruta de prueba para eliminar
 

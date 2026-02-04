@@ -1,4 +1,22 @@
 import Doctor from "../models/Doctor.js";
+
+// LISTAR DOCTORES APROBADOS (PÚBLICO)
+export const listarDoctoresAprobados = async (req, res) => {
+  try {
+    const doctores = await Doctor.find({ 
+      estado: "aprobado" 
+    })
+    .select("nombre apellido especialidad email telefono")
+    .sort({ nombre: 1 });
+    
+    res.json(doctores);
+  } catch (error) {
+    console.error("Error al listar doctores aprobados:", error);
+    res.status(500).json({ 
+      msg: "Error en el servidor al listar doctores" 
+    });
+  }
+};
 import crearJWT from "../helpers/crearJWT.js";
 import { sendMailToRegister, sendMailToRecoveryPassword } from "../helpers/sendMail.js";
 import crypto from "crypto";

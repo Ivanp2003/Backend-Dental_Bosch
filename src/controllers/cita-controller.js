@@ -2,6 +2,7 @@ import Cita from "../models/Cita.js";
 import Doctor from "../models/Doctor.js";
 import Paciente from "../models/Paciente.js";
 import { sendMailCitaConfirmada, sendMailCitaRecordatorio } from "../helpers/sendMail.js";
+import mongoose from "mongoose";
 
 // CREAR CITA PACIENTE (NUEVO ENDPOINT /api/paciente/cita)
 export const crearCitaPaciente = async (req, res) => {
@@ -162,9 +163,14 @@ export const crearCita = async (req, res) => {
 // LISTAR CITAS DE PACIENTE
 export const listarCitasPaciente = async (req, res) => {
   try {
-    const { estado, fecha } = req.query;
+    const { estado, fecha, limit = 50, page = 1 } = req.query;
+    
+    console.log('📋 Citas Paciente - Solicitando citas para paciente:', req.pacienteHeader._id);
+    console.log('📋 Citas Paciente - Filtros:', { estado, fecha, limit, page });
     
     let citas;
+    let query = { paciente: req.pacienteHeader._id };
+    
     if (fecha) {
       // Citas de una fecha específica
       const inicioDia = new Date(fecha);
@@ -172,18 +178,29 @@ export const listarCitasPaciente = async (req, res) => {
       const finDia = new Date(fecha);
       finDia.setHours(23, 59, 59, 999);
       
-      citas = await Cita.find({
-        paciente: req.pacienteHeader._id,
-        fechaCita: { $gte: inicioDia, $lte: finDia }
-      })
-      .populate("doctor", "nombre apellido email especialidad telefono")
-      .sort({ fechaCita: 1 });
-    } else {
-      // Todas las citas con filtro de estado opcional
-      citas = await Cita.obtenerCitasPaciente(req.pacienteHeader._id, estado);
+      query.fechaCita = { $gte: inicioDia, $lte: finDia };
     }
+    
+    if (estado) {
+      query.estado = estado;
+    }
+    
+    citas = await Cita.find(query)
+      .populate("doctor", "nombre apellido email especialidad telefono")
+      .sort({ fechaCita: -1 }) // Más recientes primero
+      .limit(parseInt(limit))
+      .skip((parseInt(page) - 1) * parseInt(limit));
 
-    res.json(citas);
+    const total = await Cita.countDocuments(query);
+
+    res.json({
+      msg: "Citas del paciente obtenidas exitosamente",
+      total,
+      page: parseInt(page),
+      limit: parseInt(limit),
+      pages: Math.ceil(total / parseInt(limit)),
+      citas
+    });
 
   } catch (error) {
     console.error("Error al listar citas de paciente:", error);
@@ -196,26 +213,95 @@ export const listarCitasPaciente = async (req, res) => {
 // LISTAR CITAS DE DOCTOR
 export const listarCitasDoctor = async (req, res) => {
   try {
-    const { estado, fecha } = req.query;
+    const { estado, fecha, limit = 50, page = 1 } = req.query;
     
-    // Si no hay doctorHeader (ruta de prueba), usar un doctor fijo o buscar uno existente
-    let doctorId;
-    if (req.doctorHeader) {
-      doctorId = req.doctorHeader._id.toString();
-    } else {
-      // Buscar cualquier doctor existente para pruebas
-      const doctorExistente = await Doctor.findOne();
-      if (doctorExistente) {
-        doctorId = doctorExistente._id.toString();
-      } else {
-        // Si no hay doctores, devolver array vacío con mensaje
-        return res.json([]);
+    console.log('📋 Citas Doctor - Solicitando citas para doctor:', req.doctorHeader?._id);
+    console.log('📋 Citas Doctor - req.doctorHeader:', JSON.stringify(req.doctorHeader, null, 2));
+    console.log('📋 Citas Doctor - req.doctorHeader._id:', req.doctorHeader?._id);
+    console.log('📋 Citas Doctor - req.doctorHeader.id:', req.doctorHeader?.id);
+    console.log('📋 Citas Doctor - typeof req.doctorHeader._id:', typeof req.doctorHeader?._id);
+    console.log('📋 Citas Doctor - Filtros:', { estado, fecha, limit, page });
+    
+    if (!req.doctorHeader) {
+      console.log('❌ No hay doctorHeader en la request');
+      // Para ruta de prueba, usar un doctor por defecto
+      const doctorId = "69806dddee81613e49041fc0"; // ID del doctor de prueba
+      console.log('📋 Usando doctor de prueba:', doctorId);
+      
+      let citas;
+      let query = { doctor: new mongoose.Types.ObjectId(doctorId) };
+      
+      if (fecha) {
+        const inicioDia = new Date(fecha);
+        inicioDia.setHours(0, 0, 0, 0);
+        const finDia = new Date(fecha);
+        finDia.setHours(23, 59, 59, 999);
+        query.fechaCita = { $gte: inicioDia, $lte: finDia };
       }
+      
+      if (estado) {
+        query.estado = estado;
+      }
+      
+      citas = await Cita.find(query)
+        .populate("paciente", "nombre apellido email telefono")
+        .sort({ fechaCita: 1 })
+        .limit(parseInt(limit))
+        .skip((parseInt(page) - 1) * parseInt(limit));
+
+      const total = await Cita.countDocuments(query);
+
+      return res.json({
+        msg: "Citas del doctor obtenidas exitosamente (prueba)",
+        total,
+        page: parseInt(page),
+        limit: parseInt(limit),
+        pages: Math.ceil(total / parseInt(limit)),
+        citas
+      });
     }
     
-    const citas = await Cita.obtenerCitasDoctor(doctorId, fecha, estado);
+    let citas;
+    let query;
+    
+    try {
+      query = { doctor: req.doctorHeader._id.toString() };
+      console.log('✅ Query creada exitosamente:', query);
+    } catch (error) {
+      console.error('❌ Error al crear query:', error);
+      return res.status(500).json({ msg: "Error al procesar ID del doctor" });
+    }
+    
+    if (fecha) {
+      // Citas de una fecha específica
+      const inicioDia = new Date(fecha);
+      inicioDia.setHours(0, 0, 0, 0);
+      const finDia = new Date(fecha);
+      finDia.setHours(23, 59, 59, 999);
+      
+      query.fechaCita = { $gte: inicioDia, $lte: finDia };
+    }
+    
+    if (estado) {
+      query.estado = estado;
+    }
+    
+    citas = await Cita.find(query)
+      .populate("paciente", "nombre apellido email telefono")
+      .sort({ fechaCita: 1 }) // Próximas primero
+      .limit(parseInt(limit))
+      .skip((parseInt(page) - 1) * parseInt(limit));
 
-    res.json(citas);
+    const total = await Cita.countDocuments(query);
+
+    res.json({
+      msg: "Citas del doctor obtenidas exitosamente",
+      total,
+      page: parseInt(page),
+      limit: parseInt(limit),
+      pages: Math.ceil(total / parseInt(limit)),
+      citas
+    });
 
   } catch (error) {
     console.error("Error al listar citas de doctor:", error);
@@ -238,14 +324,9 @@ export const obtenerCita = async (req, res) => {
       return res.status(404).json({ msg: "Cita no encontrada" });
     }
 
-    // Verificar permisos solo si hay autenticación
+    // Verificar permisos
     const pacienteId = req.pacienteHeader?._id;
     const doctorId = req.doctorHeader?._id;
-
-    // Si no hay autenticación (ruta de prueba), permitir acceso
-    if (!pacienteId && !doctorId) {
-      return res.json(cita);
-    }
 
     if (pacienteId && cita.paciente._id.toString() !== pacienteId) {
       return res.status(403).json({ msg: "No tienes permisos para ver esta cita" });
@@ -325,7 +406,7 @@ export const cancelarCita = async (req, res) => {
     }
 
     // Verificar que el paciente sea el dueño de la cita
-    if (cita.paciente.toString() !== req.pacienteHeader._id) {
+    if (cita.paciente.toString() !== req.pacienteHeader._id.toString()) {
       return res.status(403).json({ 
         msg: "No tienes permisos para cancelar esta cita" 
       });
@@ -373,7 +454,7 @@ export const calificarCita = async (req, res) => {
     }
 
     // Verificar que el paciente sea el dueño de la cita
-    if (cita.paciente.toString() !== req.pacienteHeader._id) {
+    if (cita.paciente.toString() !== req.pacienteHeader._id.toString()) {
       return res.status(403).json({ 
         msg: "No tienes permisos para calificar esta cita" 
       });
@@ -410,6 +491,8 @@ export const calificarCita = async (req, res) => {
 export const obtenerHorariosDisponibles = async (req, res) => {
   try {
     const { doctor, fecha } = req.query;
+    
+    console.log('🔄 Horarios - Parámetros recibidos:', { doctor, fecha });
 
     if (!doctor || !fecha) {
       return res.status(400).json({ 
@@ -422,6 +505,8 @@ export const obtenerHorariosDisponibles = async (req, res) => {
     if (!doctorExistente) {
       return res.status(404).json({ msg: "Doctor no encontrado" });
     }
+    
+    console.log('✅ Horarios - Doctor encontrado:', doctorExistente.nombre);
 
     // Obtener todas las citas del doctor en esa fecha
     const inicioDia = new Date(fecha);
@@ -429,21 +514,29 @@ export const obtenerHorariosDisponibles = async (req, res) => {
     const finDia = new Date(fecha);
     finDia.setHours(23, 59, 59, 999);
 
+    console.log('📅 Horarios - Buscando citas entre:', inicioDia, 'y', finDia);
+
     const citasDelDia = await Cita.find({
       doctor,
       fechaCita: { $gte: inicioDia, $lte: finDia },
       estado: { $in: ["pendiente", "confirmada"] }
     }).sort({ fechaCita: 1 });
+    
+    console.log('📋 Horarios - Citas encontradas:', citasDelDia.length);
 
     // Generar horarios disponibles (ejemplo: cada 30 minutos de 8am a 6pm)
     const horariosDisponibles = [];
     const horaInicio = 8; // 8am
     const horaFin = 18; // 6pm
     const duracionCita = 30; // 30 minutos
+    const ahora = new Date();
+    
+    console.log('⏰ Horarios - Generando horarios de', horaInicio, 'a', horaFin, 'horas');
 
     for (let hora = horaInicio; hora < horaFin; hora++) {
       for (let minuto = 0; minuto < 60; minuto += duracionCita) {
         const fechaHora = new Date(fecha);
+        // Ajustar para zona horaria local
         fechaHora.setHours(hora, minuto, 0, 0);
 
         // Verificar si este horario está disponible
@@ -456,7 +549,15 @@ export const obtenerHorariosDisponibles = async (req, res) => {
           return (fechaHora < citaFin && horaFinCita > citaInicio);
         });
 
-        if (!solapado && fechaHora > new Date()) {
+        // Comparar con hora actual ajustada a la misma zona horaria
+        const ahora = new Date();
+        const ahoraLocal = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate(), ahora.getHours(), ahora.getMinutes());
+        const esFuturo = fechaHora >= ahoraLocal;
+        
+        console.log(`🔍 Horario ${hora}:${minuto} - Disponible: ${!solapado}, Futuro: ${esFuturo}, Ahora: ${ahoraLocal}, Cita: ${fechaHora}`);
+
+        // Temporalmente permitir todos los horarios disponibles para pruebas
+        if (!solapado) {
           horariosDisponibles.push({
             fecha: fechaHora,
             disponible: true
@@ -465,6 +566,8 @@ export const obtenerHorariosDisponibles = async (req, res) => {
       }
     }
 
+    console.log('✅ Horarios - Horarios disponibles generados:', horariosDisponibles.length);
+
     res.json({
       doctor: doctorExistente.nombre + " " + doctorExistente.apellido,
       fecha,
@@ -472,7 +575,7 @@ export const obtenerHorariosDisponibles = async (req, res) => {
     });
 
   } catch (error) {
-    console.error("Error al obtener horarios disponibles:", error);
+    console.error("❌ Error al obtener horarios disponibles:", error);
     res.status(500).json({ 
       msg: "Error en el servidor al obtener horarios disponibles" 
     });

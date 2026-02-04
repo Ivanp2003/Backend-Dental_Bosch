@@ -8,7 +8,7 @@ const pacienteSchema = new Schema(
     cedula: { type: String, required: function() { return this.provider === 'local'; }, unique: true, sparse: true, trim: true },
     emailPaciente: { type: String, required: true, unique: true, trim: true },
     passwordPaciente: { type: String, required: function() { return this.provider === 'local'; } },
-    telefono: { type: String, required: function() { return this.provider === 'local'; } },
+    telefono: { type: String },
     direccion: { type: String },
     fechaNacimiento: { type: Date, required: function() { return this.provider === 'local'; } },
     genero: {
@@ -25,7 +25,7 @@ const pacienteSchema = new Schema(
     token: { type: String, default: null },
 
     // Campos para Google OAuth
-    googleId: { type: String, default: null, sparse: true },
+    googleId: { type: String, default: null },
     provider: { 
       type: String, 
       enum: ["local", "google"], 
