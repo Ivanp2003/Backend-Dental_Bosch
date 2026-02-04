@@ -34,7 +34,9 @@ cloudinary.config({
 const allowedOrigins = [
   process.env.URL_FRONTEND || 'http://localhost:5174',
   'http://localhost:5174',
-  'https://front-dental-bosch.vercel.app'
+  'https://front-dental-bosch.vercel.app',
+  // Allow all Vercel preview subdomains
+  /^https:\/\/front-dental-bosch-.*\.vercel\.app$/
 ];
 
 servidor.use(cors({
