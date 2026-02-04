@@ -14,7 +14,8 @@ const pacienteSchema = new Schema(
     genero: {
       type: String,
       enum: ["Masculino", "Femenino", "Otro"],
-      required: true
+      required: function() { return this.provider === 'local'; },
+      default: function() { return this.provider === 'google' ? 'Otro' : undefined; }
     },
 
     // Estado

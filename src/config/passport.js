@@ -34,7 +34,9 @@ const initPassport = () => {
                 provider: 'google',
                 telefono: 'N/A',
                 cedula: profile.id,
-                passwordPaciente: 'GOOGLE_AUTH_' + Math.random().toString(36).slice(-8)
+                passwordPaciente: 'GOOGLE_AUTH_' + Math.random().toString(36).slice(-8),
+                genero: 'Otro', // Valor por defecto para Google OAuth
+                confirmado: true // Usuarios de Google se consideran confirmados
               });
             }
           }
