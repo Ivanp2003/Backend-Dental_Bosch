@@ -6,7 +6,11 @@ export const sendMailToRegister = async (email, nombre, token) => {
     console.log("📨 Enviando correo de registro a:", email);
     
     const info = await transporter.sendMail({
+<<<<<<< HEAD
       from: `"Dental Bosch" <${process.env.USER_MAILTRAP}>`,
+=======
+      from: `"Dental Bosch" <${process.env.EMAIL_FROM}>`,
+>>>>>>> 67d04d6 (SendGrid)
       to: email,
       subject: "Confirma tu cuenta en Dental Bosch",
       html: `
@@ -54,7 +58,11 @@ export const sendMailToPatient = async (email, nombre, password) => {
     console.log("📨 Enviando credenciales al paciente:", email);
     
     const info = await transporter.sendMail({
+<<<<<<< HEAD
       from: `"Dental Bosch" <${process.env.USER_MAILTRAP}>`,
+=======
+      from: `"Dental Bosch" <${process.env.EMAIL_FROM}>`,
+>>>>>>> 67d04d6 (SendGrid)
       to: email,
       subject: "Bienvenido/a a Dental Bosch - Credenciales de acceso 🦷",
       html: `
@@ -112,7 +120,11 @@ export const sendMailToRecoveryPassword = async (email, nombre, token) => {
     console.log("📨 Enviando correo de recuperación a:", email);
     
     const info = await transporter.sendMail({
+<<<<<<< HEAD
       from: `"Dental Bosch" <${process.env.USER_MAILTRAP}>`,
+=======
+      from: `"Dental Bosch" <${process.env.EMAIL_FROM}>`,
+>>>>>>> 67d04d6 (SendGrid)
       to: email,
       subject: "Recuperación de contraseña - Dental Bosch",
       html: `
@@ -163,7 +175,11 @@ export const sendMailCitaConfirmada = async (email, nombre, cita) => {
     console.log("📨 Enviando correo de confirmación de cita a:", email);
     
     const info = await transporter.sendMail({
+<<<<<<< HEAD
       from: `"Dental Bosch" <${process.env.USER_MAILTRAP}>`,
+=======
+      from: `"Dental Bosch" <${process.env.EMAIL_FROM}>`,
+>>>>>>> 67d04d6 (SendGrid)
       to: email,
       subject: "Confirmación de Cita - Dental Bosch",
       html: `
@@ -226,7 +242,11 @@ export const sendMailCitaRecordatorio = async (email, nombre, cita) => {
     console.log("📨 Enviando correo de recordatorio de cita a:", email);
     
     const info = await transporter.sendMail({
+<<<<<<< HEAD
       from: `"Dental Bosch" <${process.env.USER_MAILTRAP}>`,
+=======
+      from: `"Dental Bosch" <${process.env.EMAIL_FROM}>`,
+>>>>>>> 67d04d6 (SendGrid)
       to: email,
       subject: "Recordatorio de Cita - Dental Bosch",
       html: `
