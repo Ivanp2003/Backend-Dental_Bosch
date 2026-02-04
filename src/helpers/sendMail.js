@@ -292,3 +292,4 @@ export const sendMailCitaRecordatorio = async (email, nombre, cita) => {
     throw error;
   }
 };
+// Fix for Render deployment
