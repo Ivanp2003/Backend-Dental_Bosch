@@ -31,7 +31,18 @@ cloudinary.config({
 });
 
 // MIDDLEWARES
-servidor.use(cors());
+const allowedOrigins = [
+  process.env.URL_FRONTEND || 'http://localhost:5174',
+  'http://localhost:5174',
+  'https://front-dental-bosch.vercel.app'
+];
+
+servidor.use(cors({
+  origin: allowedOrigins,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 servidor.use(bodyParser.json());
 servidor.use(bodyParser.urlencoded({ extended: true }));
 
