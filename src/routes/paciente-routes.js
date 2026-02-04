@@ -29,7 +29,7 @@ router.get('/auth/google', passport.authenticate('google-paciente', {
 
 router.get('/auth/google/callback', 
   passport.authenticate('google-paciente', { 
-    failureRedirect: `${process.env.URL_FRONTEND || 'http://localhost:5174'}/login-paciente`,
+    failureRedirect: `${process.env.URL_FRONTEND || 'https://front-dental-bosch.vercel.app'}/login-paciente`,
     session: false 
   }),
   (req, res) => {
@@ -37,7 +37,7 @@ router.get('/auth/google/callback',
     const token = crearJWT({ id: req.user._id, rol: 'paciente' });
     
     // Redirigir al frontend con el token
-    res.redirect(`${process.env.URL_FRONTEND || 'http://localhost:5174'}/auth/google-success?token=${token}`);
+    res.redirect(`${process.env.URL_FRONTEND || 'https://front-dental-bosch.vercel.app'}/auth/google-success?token=${token}`);
   }
 );
 
